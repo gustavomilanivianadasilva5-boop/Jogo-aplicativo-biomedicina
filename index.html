@@ -72,18 +72,21 @@
           </div>
           <div class="scene-badge"><span></span> VISUALIZAÇÃO CONCEITUAL</div>
           <div class="patrol-hud" id="patrol-hud" hidden>
-            <span>PATRULHA ALVEOLAR · CENÁRIO DIDÁTICO</span>
+            <span>PATRULHA ABERTA · <b id="world-alveoli-count">1.000</b> ALVÉOLOS</span>
             <div class="hud-team-switcher">
               <span>CONTROLE DA EQUIPE</span>
               <div class="player-controls hud-player-controls" id="hud-player-controls"></div>
             </div>
             <strong><b id="patrol-bacteria-count">0</b> <span id="patrol-bacteria-label">bacilos no modelo</span></strong>
             <small><span id="extracellular-count">18</span> livres · <span id="phagosome-count">0</span> em fagossomos</small>
+            <small>Alvéolos com bacilos: <b id="infected-alveoli-count">1</b></small>
             <small><span id="intracellular-count">0</span> no citosol · <span id="granuloma-count">0</span> granulomas</small>
+            <small>Neutrófilos: <span id="neutrophil-phagosome-count">0</span> fagossomos · <span id="neutrophil-cytosol-count">0</span> no citosol · dano <b id="neutrophil-damage">0%</b></small>
             <small><span id="net-count">0</span> NETs · <span id="complement-count">0</span> complexos do complemento</small>
             <small>Dano do macrófago: <b id="macrophage-damage">0%</b></small>
-            <small>Rupturas celulares no modelo: <b id="lysis-count">0</b></small>
+            <small>Rupturas no modelo: macrófagos <b id="lysis-count">0</b> · neutrófilos <b id="neutrophil-lysis-count">0</b></small>
             <small>Equipe: <b id="patrol-cell-count">1</b> · sinal <span id="patrol-signal-count">0/7</span></small>
+            <small>Região: <b id="world-lung-side">Pulmão esquerdo</b></small>
           </div>
           <div class="sterilization-banner" id="sterilization-banner" role="status" hidden>
             <span class="sterilization-check">✓</span>
@@ -120,7 +123,7 @@
         </div>
 
         <div class="hierarchy-bar">
-          <div class="hierarchy-heading"><span>HIERARQUIA DE ZOOM</span><span id="hierarchy-count">01 / 13</span></div>
+          <div class="hierarchy-heading"><span>ZOOM ANATÔMICO</span><span id="hierarchy-count">01 / 04</span></div>
           <div class="hierarchy-track" id="hierarchy-track" role="navigation" aria-label="Níveis de zoom"></div>
         </div>
       </section>
@@ -147,7 +150,7 @@
                 <b id="simulation-status">Pronto para patrulhar</b>
                 <span class="simulation-count" id="simulation-count">0 / 18</span>
               </div>
-              <p>Conduza o macrófago pelo alvéolo com WASD ou joystick. Ative módulos imunes em qualquer ordem; o modelo só transmite o sinal na sequência da via.</p>
+              <p>Explore o mapa aberto de 1.000 alvéolos. Focos não controlados se disseminam mais depressa à medida que ocupam novos alvéolos; patrulhe o mapa e coordene a defesa. WASD e joystick conduzem sua célula.</p>
               <div class="simulation-actions">
                 <button class="simulation-primary" id="patrol-button">Iniciar patrulha</button>
                 <button class="simulation-secondary" id="multiply-button" title="Simular mitose local (máximo de dez macrófagos)" disabled>＋ Mitose <span id="team-size">1/10</span></button>
@@ -161,14 +164,28 @@
                 </div>
                 <small class="coop-hint">Até 3 pessoas no mesmo dispositivo: toque no jogador para assumir seu papel.</small>
                 <div class="player-controls" id="player-controls"></div>
+                <div class="cell-command-deck" id="cell-command-deck">
+                  <div class="cell-command-heading"><span id="cell-command-role">Base do macrófago</span><span id="cell-command-status">Aguardando início</span></div>
+                  <small id="cell-command-description">Prepare sua célula para entrar no mapa pulmonar compartilhado.</small>
+                  <div class="cell-role-options" id="cell-role-options" role="group" aria-label="Escolha a célula do jogador">
+                    <button type="button" data-cell-role="Macrófago">Macrófago</button>
+                    <button type="button" data-cell-role="Neutrófilo">Neutrófilo</button>
+                    <button type="button" data-cell-role="Plasmócito">Plasmócito</button>
+                  </div>
+                  <div class="cell-command-actions">
+                    <button type="button" class="cell-command-primary" id="cell-start-button">Entrar na patrulha</button>
+                    <button type="button" id="cell-mitosis-button">Mitose</button>
+                    <button type="button" id="cell-special-button">Ação especial</button>
+                  </div>
+                </div>
                 <small id="helper-status">T helper: recrutamento automático pela sinalização didática</small>
               </div>
               <div class="recruitment-panel">
-                <div class="recruitment-heading"><span>CHEGADA DE OUTRAS DEFESAS</span><span>recrutamento didático</span></div>
+                <div class="recruitment-heading"><span>REFORÇOS E CÉLULAS</span><span>recrutamento didático</span></div>
                 <div class="recruitment-controls">
                   <button type="button" class="recruitment-control" id="recruit-neutrophils-button" disabled>
                     <b>＋ Neutrófilos <span id="neutrophil-count">0/6</span></b>
-                    <small>Fagocitose + NETs para aprisionamento</small>
+                    <small>Fagocitose, NETs e vulnerabilidade à infecção</small>
                   </button>
                   <button type="button" class="recruitment-control plasma-recruitment" id="recruit-plasma-button" disabled>
                     <b>＋ Plasmócitos <span id="plasma-cell-count">0/6</span></b>
@@ -196,6 +213,7 @@
                 <button type="button" data-infection-view="alveolus" aria-pressed="true">Alvéolo</button>
                 <button type="button" data-infection-view="phagosome" aria-pressed="false">Fagossomo</button>
                 <button type="button" data-infection-view="host-cytosol" aria-pressed="false">Citosol do macrófago</button>
+                <button type="button" data-infection-view="neutrophil-cytosol" aria-pressed="false">Citosol do neutrófilo</button>
                 <button type="button" data-infection-view="wall" aria-pressed="false">Parede</button>
                 <button type="button" data-infection-view="cytoplasm" aria-pressed="false">Citoplasma</button>
                 <button type="button" data-infection-view="phagolysosome" aria-pressed="false">Fagolisossomo</button>
